@@ -10,7 +10,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000'], // frontend later
+    origin: ['https://whisps.netlify.app'], // frontend later
     credentials: true
   }
 });
