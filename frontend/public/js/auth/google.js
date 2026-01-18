@@ -1,6 +1,6 @@
 // js/auth/google.js
-const API_BASE = import.meta.env.A_BACKEND_URL;
-const GOOGLE_CLIENT_ID = import.meta.env.GOOGLE_CLIENT_ID;
+const API_BASE = "https://whisp-backend-jle2.onrender.com";
+const GOOGLE_CLIENT_ID = "754770143659-o1s7g437emffuo7goi7pime6chqf6cp5.apps.googleusercontent.com";
 
 window.onload = function() {
   const googleBtn = document.getElementById('googleBtn');
