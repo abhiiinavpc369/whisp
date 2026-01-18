@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Whisp • Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7C5CFF',
+            secondary: '#4DA3FF',
+            dark: '#0F1117',
+            surface: '#1A1D24',
+            panel: '#151821'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Google Identity -->
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/auth/google.js"></script>
+
+  <link rel="stylesheet" href="css/theme.css" />
+</head>
+
+<body class="bg-dark text-white min-h-screen flex flex-col">
+
+  <!-- MAIN -->
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-2">
+
+    <!-- LEFT: MOCK CHAT (CONTAINER) -->
+    <div class="hidden lg:flex items-center justify-center bg-panel">
+
+      <div class="w-[92%] h-[85%] rounded-2xl bg-surface shadow-2xl border border-white/5 flex overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-60 bg-panel border-r border-white/5 p-4">
+          <h3 class="text-xs text-gray-400 uppercase mb-3">Channels</h3>
+          <div id="channels" class="space-y-2 text-sm">
+            <div class="channel active"># general</div>
+            <div class="channel"># design</div>
+            <div class="channel"># random</div>
+          </div>
+        </aside>
+
+        <!-- Chat -->
+        <main class="flex-1 flex flex-col">
+
+          <!-- Header -->
+          <div class="p-4 border-b border-white/5 flex items-center gap-2">
+            <i class="fa-solid fa-hashtag text-gray-400"></i>
+            <span class="font-medium">general</span>
+          </div>
+
+          <!-- Messages -->
+          <div id="chatMessages" class="flex-1 p-5 space-y-4 overflow-y-auto">
+            <div class="flex gap-3">
+              <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center font-bold">A</div>
+              <div>
+                <p class="text-sm font-semibold text-primary">Abhinav</p>
+                <p class="text-gray-300 text-sm">This UI already feels premium.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center font-bold">S</div>
+              <div>
+                <p class="text-sm font-semibold text-secondary">Shukla</p>
+                <p class="text-gray-300 text-sm">Minimal, calm, no clutter 💜</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input -->
+          <form id="chatForm" class="p-4 border-t border-white/5 flex gap-2">
+            <input id="chatInput" type="text" placeholder="Message #general"
+              class="flex-1 bg-dark px-4 py-2 rounded-lg text-sm outline-none" autocomplete="off" />
+            <button class="bg-primary px-4 rounded-lg hover:bg-secondary transition" type="submit">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- RIGHT: LOGIN -->
+    <div class="flex items-center justify-center p-6">
+      <div class="bg-surface p-8 rounded-xl w-full max-w-sm shadow-xl border border-white/5">
+
+        <h1 class="text-3xl font-bold text-center mb-2 text-primary">Whisp</h1>
+        <p class="text-center text-gray-400 mb-6">
+          Quietly powerful conversations
+        </p>
+
+        <button id="googleBtn"
+          class="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-medium hover:scale-[1.02] transition">
+          <i class="fa-brands fa-google"></i>
+          Continue with Google
+        </button>
+
+        <p id="error" class="text-red-400 text-sm mt-4 hidden"></p>
+
+        <p class="text-xs text-gray-500 mt-6 text-center">
+          By continuing, you agree to Whisp’s Terms & Privacy Policy
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer
+    class="border-t border-white/5 bg-panel px-6 py-4 text-sm text-gray-400 flex flex-col md:flex-row justify-between gap-3">
+    <div>
+      © 2026 <span class="text-primary font-medium">Whisp</span>. All rights reserved.
+    </div>
+    <div class="flex gap-4 items-center">
+      <span>Crafted with ❤️</span>
+      <span class="text-xs">Design & Dev by <span class="text-primary">Abhinav</span></span>
+      <div class="flex gap-3 text-lg">
+        <i class="fa-brands fa-github hover:text-white cursor-pointer"></i>
+        <i class="fa-brands fa-x-twitter hover:text-white cursor-pointer"></i>
+        <i class="fa-brands fa-discord hover:text-white cursor-pointer"></i>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MOCK CHAT LOGIC -->
+  <script>
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('chatInput');
+    const messages = document.getElementById('chatMessages');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!input.value.trim()) return;
+
+      const msg = document.createElement('div');
+      msg.className = 'flex gap-3 animate-fade-in';
+      msg.innerHTML = `
+        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center font-bold">Y</div>
+        <div>
+          <p class="text-sm font-semibold text-primary">You</p>
+          <p class="text-gray-300 text-sm">${input.value}</p>
+        </div>
+      `;
+
+      messages.appendChild(msg);
+      messages.scrollTop = messages.scrollHeight;
+      input.value = '';
+    });
+
+    document.querySelectorAll('.channel').forEach(ch => {
+      ch.addEventListener('click', () => {
+        document.querySelectorAll('.channel').forEach(c => c.classList.remove('active'));
+        ch.classList.add('active');
+      });
+    });
+  </script>
+
+  <!-- AUTH -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/auth/session.js"></script>
+  <script src="js/auth/guard.js"></script>
+  <script src="js/auth/google.js"></script>
+
+
+  <!-- STYLES -->
+  <style>
+    .channel {
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    .channel.active,
+    .channel:hover {
+      background: rgba(124, 92, 255, 0.15);
+      color: #7C5CFF;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+  </style>
+
+</body>
+
+</html>

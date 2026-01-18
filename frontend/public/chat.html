@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Auth Guard -->
+  <script type="module" src="js/auth/guard.js"></script>
+
+  <meta charset="UTF-8" />
+  <title>Whisp • Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7C5CFF',
+            secondary: '#4DA3FF',
+            dark: '#0F1117',
+            surface: '#1A1D24',
+            panel: '#151821',
+            success: '#22c55e',
+            danger: '#ef4444',
+            warning: '#f59e0b'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+
+<body class="bg-dark text-white min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-panel p-4 flex justify-between items-center border-b border-white/10">
+    <h1 class="text-xl font-bold text-primary" id="currentChannel">
+      Whisp • Loading...
+    </h1>
+
+    <div class="flex items-center gap-4">
+      <span id="onlineStatus" class="text-xs text-gray-400"></span>
+      <button class="text-red-400 hover:text-red-500" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-surface p-4 border-r border-white/10 hidden lg:flex flex-col">
+
+      <!-- Friend Search -->
+      <input id="friendSearch" placeholder="Search users..."
+        class="mb-3 bg-dark px-3 py-2 rounded border border-white/10 focus:border-primary outline-none" />
+
+      <!-- Friend Requests -->
+      <h3 class="text-xs text-gray-400 uppercase mb-2">Friend Requests</h3>
+      <div id="friendRequests" class="space-y-2 mb-4"></div>
+
+      <!-- Friends -->
+      <h3 class="text-xs text-gray-400 uppercase mb-2">Friends</h3>
+      <div id="friendList" class="flex-1 overflow-y-auto space-y-2"></div>
+    </aside>
+
+    <!-- Chat -->
+    <section class="flex-1 flex flex-col">
+
+      <!-- Messages -->
+      <div id="messages" class="flex-1 p-6 overflow-y-auto space-y-4 bg-dark"></div>
+
+      <!-- Input -->
+      <div class="p-4 border-t border-white/10 bg-panel">
+        <form id="messageForm" class="flex gap-3">
+          <input id="messageInput" autocomplete="off" placeholder="Type a message..."
+            class="flex-1 bg-dark px-4 py-2 rounded-lg border border-white/10 focus:border-primary outline-none" />
+          <button
+            class="bg-primary px-4 py-2 rounded-lg hover:bg-primary/90 transition font-medium">
+            Send
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="p-3 text-xs text-center text-gray-500 border-t border-white/10">
+    Whisp • quietly powerful conversations
+  </footer>
+
+  <!-- Session -->
+  <script src="js/auth/session.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <script>
+    /* ===================== CONFIG ===================== */
+    const API_BASE = 'http://localhost:4000';
+    const socket = io(API_BASE, { autoConnect: true });
+
+    let currentUser = null;
+    let currentFriend = null;
+    let onlineUsers = new Set();
+
+    /* ===================== ELEMENTS ===================== */
+    const messagesEl = document.getElementById('messages');
+    const friendListEl = document.getElementById('friendList');
+    const friendReqEl = document.getElementById('friendRequests');
+    const searchInput = document.getElementById('friendSearch');
+    const channelTitle = document.getElementById('currentChannel');
+    const onlineStatusEl = document.getElementById('onlineStatus');
+    const form = document.getElementById('messageForm');
+    const input = document.getElementById('messageInput');
+
+    /* ===================== AUTH ===================== */
+    async function loadCurrentUser() {
+      const token = window.getToken();
+      if (!token) return location.href = '/index.html';
+
+      const res = await fetch(`${API_BASE}/users/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) return logout();
+
+      currentUser = await res.json();
+      channelTitle.textContent = 'Whisp • Select a friend';
+      socket.emit('join', currentUser.id);
+
+      loadFriends();
+      loadFriendRequests();
+    }
+
+    /* ===================== FRIENDS ===================== */
+    async function loadFriends(query = '') {
+      const token = window.getToken();
+      const res = await fetch(`${API_BASE}/users/search?query=${query}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) return;
+      const users = await res.json();
+      friendListEl.innerHTML = '';
+
+      users.forEach(u => {
+        if (u.id === currentUser.id) return;
+
+        const online = onlineUsers.has(u.id);
+        const el = document.createElement('div');
+        el.className = 'flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5';
+        el.innerHTML = `
+          <div class="relative">
+            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center font-bold">
+              ${u.username[0]}
+            </div>
+            <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full ${online ? 'bg-success' : 'bg-gray-500'} border border-dark"></span>
+          </div>
+          <div class="flex-1">${u.username}</div>
+        `;
+        el.onclick = () => selectFriend(u);
+        friendListEl.appendChild(el);
+      });
+    }
+
+    /* ===================== FRIEND REQUESTS ===================== */
+    async function loadFriendRequests() {
+      const token = window.getToken();
+      const res = await fetch(`${API_BASE}/friends/requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) return;
+      const requests = await res.json();
+      friendReqEl.innerHTML = '';
+
+      requests.forEach(u => {
+        const el = document.createElement('div');
+        el.className = 'bg-dark p-2 rounded flex justify-between items-center';
+        el.innerHTML = `
+          <span>${u.username}</span>
+          <div class="flex gap-2">
+            <button class="text-success" onclick="acceptFriend('${u.id}')">
+              <i class="fa fa-check"></i>
+            </button>
+            <button class="text-danger" onclick="rejectFriend('${u.id}')">
+              <i class="fa fa-x"></i>
+            </button>
+          </div>
+        `;
+        friendReqEl.appendChild(el);
+      });
+    }
+
+    async function acceptFriend(id) {
+      const token = window.getToken();
+      await fetch(`${API_BASE}/friends/accept/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadFriendRequests();
+      loadFriends();
+    }
+
+    async function rejectFriend(id) {
+      const token = window.getToken();
+      await fetch(`${API_BASE}/friends/reject/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadFriendRequests();
+    }
+
+    /* ===================== CHAT ===================== */
+    async function selectFriend(friend) {
+      currentFriend = friend;
+      channelTitle.textContent = `Whisp • ${friend.username}`;
+      onlineStatusEl.textContent = onlineUsers.has(friend.id) ? 'Online' : 'Offline';
+      messagesEl.innerHTML = '';
+      loadMessages(friend.id);
+    }
+
+    async function loadMessages(friendId) {
+      const token = window.getToken();
+      const res = await fetch(`${API_BASE}/messages/${friendId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) return;
+      const messages = await res.json();
+      messages.forEach(m => renderMessage(m));
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!currentFriend || !input.value.trim()) return;
+
+      const text = input.value.trim();
+      input.value = '';
+
+      const token = window.getToken();
+      await fetch(`${API_BASE}/messages/${currentFriend.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+
+      socket.emit('sendMessage', {
+        senderId: currentUser.id,
+        recipientId: currentFriend.id,
+        text
+      });
+
+      renderMessage({
+        sender: currentUser.id,
+        text,
+        createdAt: new Date(),
+        status: 'delivered'
+      });
+    });
+
+    function renderMessage(m) {
+      const isMe = m.sender === currentUser.id;
+      const el = document.createElement('div');
+      el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+      el.innerHTML = `
+        <div class="max-w-xs p-3 rounded-lg ${isMe ? 'bg-primary' : 'bg-surface'}">
+          <p>${m.text}</p>
+          <p class="text-xs text-right opacity-70 mt-1">
+            ${new Date(m.createdAt).toLocaleTimeString()} 
+            ${isMe ? (m.status === 'seen' ? '✓✓' : '✓') : ''}
+          </p>
+        </div>
+      `;
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    /* ===================== SOCKET ===================== */
+    socket.on('userOnline', id => {
+      onlineUsers.add(id);
+      loadFriends();
+    });
+
+    socket.on('userOffline', id => {
+      onlineUsers.delete(id);
+      loadFriends();
+    });
+
+    socket.on('receiveMessage', msg => {
+      if (currentFriend && msg.senderId === currentFriend.id) {
+        renderMessage(msg);
+        socket.emit('messageSeen', msg.id);
+      }
+    });
+
+    /* ===================== LOGOUT ===================== */
+    function logout() {
+      window.clearSession();
+      location.href = '/index.html';
+    }
+
+    /* ===================== INIT ===================== */
+    searchInput.addEventListener('input', e => loadFriends(e.target.value));
+    loadCurrentUser();
+  </script>
+
+</body>
+</html>

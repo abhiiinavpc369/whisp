@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+  <script type="module" src="js/auth/guard.js"></script>
+  <meta charset="UTF-8" />
+  <title>Whisp • Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7C5CFF',
+            secondary: '#4DA3FF',
+            dark: '#0F1117',
+            surface: '#1A1D24'
+          }
+        }
+      }
+    }
+  </script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    .glass {
+      background: rgba(26, 29, 36, 0.7);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glow {
+      box-shadow: 0 0 40px rgba(124, 92, 255, .25);
+    }
+
+    .whisper {
+      position: absolute;
+      border-radius: 9999px;
+      background: radial-gradient(circle, rgba(124, 92, 255, .5), transparent);
+      animation: float linear infinite;
+      opacity: .5;
+    }
+
+    @keyframes float {
+      from {
+        transform: translateY(0);
+      }
+
+      to {
+        transform: translateY(-120vh);
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-dark text-white min-h-screen overflow-hidden relative">
+
+
+
+
+  <!-- Ambient whispers -->
+  <script>
+    for (let i = 0; i < 16; i++) {
+      const w = document.createElement('div');
+      w.className = 'whisper';
+      w.style.width = w.style.height = `${Math.random() * 140 + 40}px`;
+      w.style.left = `${Math.random() * 100}%`;
+      w.style.bottom = `-${Math.random() * 100}px`;
+      w.style.animationDuration = `${Math.random() * 30 + 20}s`;
+      document.body.appendChild(w);
+    }
+  </script>
+
+  <!-- Page -->
+  <div class="relative z-10 min-h-screen flex flex-col items-center justify-center px-6">
+
+    <!-- Profile Card -->
+    <div class="glass glow rounded-2xl w-full max-w-md p-8">
+
+      <!-- Avatar -->
+      <div class="flex flex-col items-center mb-6">
+        <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-3xl font-bold mb-3">
+          A
+        </div>
+        <h1 class="text-xl font-semibold">Aryavrat</h1>
+        <p class="text-sm text-gray-400">aryavrat@whisp.app</p>
+      </div>
+
+      <!-- Fields -->
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-400">Display name</label>
+          <input type="text" value="Aryavrat"
+            class="w-full mt-1 bg-dark border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-primary" />
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400">Status</label>
+          <input type="text" value="Quietly building Whisp ✨"
+            class="w-full mt-1 bg-dark border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-secondary" />
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-6 flex gap-3">
+        <button class="flex-1 bg-primary hover:bg-primary/90 py-2 rounded-lg font-medium transition">
+          <i class="fa-solid fa-save mr-2"></i>
+          Save
+        </button>
+
+        <button class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg font-medium transition"
+          onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket mr-2"></i>
+          Logout
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="mt-8 text-xs text-gray-500 text-center">
+      <i class="fa-regular fa-user"></i>
+      Whisp Profile • quietly powerful conversations
+    </p>
+
+  </div>
+
+  <!-- Mock logout -->
+  <script>
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/index.html';
+    }
+  </script>
+
+</body>
+
+</html>

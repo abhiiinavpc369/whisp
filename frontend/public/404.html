@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>404 • Whisp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7C5CFF',
+            secondary: '#4DA3FF',
+            dark: '#0F1117',
+            surface: '#1A1D24'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <style>
+    .glow {
+      text-shadow:
+        0 0 20px rgba(124,92,255,.6),
+        0 0 40px rgba(77,163,255,.4);
+    }
+
+    .whisper {
+      position: absolute;
+      border-radius: 9999px;
+      background: radial-gradient(circle, rgba(124,92,255,.6), transparent);
+      animation: float linear infinite;
+      opacity: .6;
+    }
+
+    @keyframes float {
+      from { transform: translateY(0); }
+      to { transform: translateY(-120vh); }
+    }
+  </style>
+</head>
+
+<body class="bg-dark text-white min-h-screen flex items-center justify-center relative overflow-hidden">
+
+  <!-- Floating whispers -->
+  <script>
+    for (let i = 0; i < 20; i++) {
+      const w = document.createElement('div');
+      w.className = 'whisper';
+      w.style.width = w.style.height = `${Math.random() * 120 + 40}px`;
+      w.style.left = `${Math.random() * 100}%`;
+      w.style.bottom = `-${Math.random() * 100}px`;
+      w.style.animationDuration = `${Math.random() * 25 + 15}s`;
+      document.body.appendChild(w);
+    }
+  </script>
+
+  <!-- Content -->
+  <div class="relative z-10 text-center max-w-md px-6">
+
+    <h1 class="text-8xl font-black glow text-primary mb-4 select-none">
+      404
+    </h1>
+
+    <p class="text-xl font-medium mb-2">
+      This conversation vanished.
+    </p>
+
+    <p class="text-gray-400 mb-8">
+      The page you’re looking for doesn’t exist — or maybe it never whispered back.
+    </p>
+
+    <a
+      href="/public/index.html"
+      class="inline-flex items-center gap-2 bg-primary/90 hover:bg-primary px-6 py-3 rounded-lg font-medium transition shadow-lg shadow-primary/30"
+    >
+      <i class="fa-solid fa-arrow-left"></i>
+      Back to Whisp
+    </a>
+
+    <!-- Credits -->
+    <p class="mt-10 text-xs text-gray-500">
+      <i class="fa-regular fa-comment-dots"></i>
+      Whisp — quietly powerful conversations
+    </p>
+
+  </div>
+
+</body>
+</html>
