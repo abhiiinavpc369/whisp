@@ -51,18 +51,17 @@
   </header>
 
   <!-- Main -->
-  <main class="flex-1 flex overflow-hidden">
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-surface p-4 border-r border-white/10 hidden lg:flex flex-col">
-
+    <aside class="w-full lg:w-64 bg-surface p-4 border-b lg:border-b-0 lg:border-r border-white/10 flex-shrink-0 flex flex-col">
       <!-- Friend Search -->
       <input id="friendSearch" placeholder="Search users..."
         class="mb-3 bg-dark px-3 py-2 rounded border border-white/10 focus:border-primary outline-none" />
 
       <!-- Friend Requests -->
       <h3 class="text-xs text-gray-400 uppercase mb-2">Friend Requests</h3>
-      <div id="friendRequests" class="space-y-2 mb-4"></div>
+      <div id="friendRequests" class="space-y-2 mb-4 flex-1 overflow-y-auto"></div>
 
       <!-- Friends -->
       <h3 class="text-xs text-gray-400 uppercase mb-2">Friends</h3>
@@ -71,7 +70,6 @@
 
     <!-- Chat -->
     <section class="flex-1 flex flex-col">
-
       <!-- Messages -->
       <div id="messages" class="flex-1 p-6 overflow-y-auto space-y-4 bg-dark"></div>
 
@@ -87,7 +85,6 @@
         </form>
       </div>
     </section>
-
   </main>
 
   <!-- Footer -->
@@ -95,19 +92,17 @@
     Whisp • quietly powerful conversations
   </footer>
 
-  <!-- Session -->
+  <!-- Session & Socket -->
   <script src="js/auth/session.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script type="module">
+    import { API_BASE } from './config.js';
 
-  <script>
-    /* ===================== CONFIG ===================== */
-    const socket = io("https://whisp-backend-jle2.onrender.com", { autoConnect: true });
-
+    const socket = io(API_BASE, { autoConnect: true });
     let currentUser = null;
     let currentFriend = null;
     let onlineUsers = new Set();
 
-    /* ===================== ELEMENTS ===================== */
     const messagesEl = document.getElementById('messages');
     const friendListEl = document.getElementById('friendList');
     const friendReqEl = document.getElementById('friendRequests');
@@ -122,15 +117,14 @@
       const token = window.getToken();
       if (!token) return location.href = '/index.html';
 
-      const res = await fetch(`https://whisp-backend-jle2.onrender.com/users/me`, {
+      const res = await fetch(`${API_BASE}/users/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (!res.ok) return logout();
 
       currentUser = await res.json();
       channelTitle.textContent = 'Whisp • Select a friend';
-      socket.emit('join', currentUser.id);
+      socket.emit('user:online', currentUser.id);
 
       loadFriends();
       loadFriendRequests();
@@ -139,17 +133,15 @@
     /* ===================== FRIENDS ===================== */
     async function loadFriends(query = '') {
       const token = window.getToken();
-      const res = await fetch(`https://whisp-backend-jle2.onrender.com/users/search?query=${query}`, {
+      const res = await fetch(`${API_BASE}/users/search?query=${query}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (!res.ok) return;
+
       const users = await res.json();
       friendListEl.innerHTML = '';
-
       users.forEach(u => {
         if (u.id === currentUser.id) return;
-
         const online = onlineUsers.has(u.id);
         const el = document.createElement('div');
         el.className = 'flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5';
@@ -167,29 +159,23 @@
       });
     }
 
-    /* ===================== FRIEND REQUESTS ===================== */
     async function loadFriendRequests() {
       const token = window.getToken();
-      const res = await fetch(`https://whisp-backend-jle2.onrender.com/friends/requests`, {
+      const res = await fetch(`${API_BASE}/friends/requests`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (!res.ok) return;
+
       const requests = await res.json();
       friendReqEl.innerHTML = '';
-
       requests.forEach(u => {
         const el = document.createElement('div');
         el.className = 'bg-dark p-2 rounded flex justify-between items-center';
         el.innerHTML = `
           <span>${u.username}</span>
           <div class="flex gap-2">
-            <button class="text-success" onclick="acceptFriend('${u.id}')">
-              <i class="fa fa-check"></i>
-            </button>
-            <button class="text-danger" onclick="rejectFriend('${u.id}')">
-              <i class="fa fa-x"></i>
-            </button>
+            <button class="text-success" onclick="acceptFriend('${u.id}')"><i class="fa fa-check"></i></button>
+            <button class="text-danger" onclick="rejectFriend('${u.id}')"><i class="fa fa-x"></i></button>
           </div>
         `;
         friendReqEl.appendChild(el);
@@ -198,20 +184,14 @@
 
     async function acceptFriend(id) {
       const token = window.getToken();
-      await fetch(`https://whisp-backend-jle2.onrender.com/friends/accept/${id}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await fetch(`${API_BASE}/friends/accept/${id}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       loadFriendRequests();
       loadFriends();
     }
 
     async function rejectFriend(id) {
       const token = window.getToken();
-      await fetch(`https://whisp-backend-jle2.onrender.com/friends/reject/${id}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await fetch(`${API_BASE}/friends/reject/${id}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       loadFriendRequests();
     }
 
@@ -226,10 +206,7 @@
 
     async function loadMessages(friendId) {
       const token = window.getToken();
-      const res = await fetch(`${API_BASE}/messages/${friendId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const res = await fetch(`${API_BASE}/messages/${friendId}`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
       const messages = await res.json();
       messages.forEach(m => renderMessage(m));
@@ -238,32 +215,20 @@
     form.addEventListener('submit', async e => {
       e.preventDefault();
       if (!currentFriend || !input.value.trim()) return;
-
       const text = input.value.trim();
       input.value = '';
 
       const token = window.getToken();
-      await fetch(`${API_BASE}/messages/${currentFriend.id}`, {
+      const res = await fetch(`${API_BASE}/messages/${currentFriend.id}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ text })
       });
+      if (!res.ok) return;
 
-      socket.emit('sendMessage', {
-        senderId: currentUser.id,
-        recipientId: currentFriend.id,
-        text
-      });
-
-      renderMessage({
-        sender: currentUser.id,
-        text,
-        createdAt: new Date(),
-        status: 'delivered'
-      });
+      const msg = await res.json();
+      renderMessage(msg);
+      socket.emit('message:send', { to: currentFriend.id, text, conversationId: msg.conversationId });
     });
 
     function renderMessage(m) {
@@ -272,10 +237,9 @@
       el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
       el.innerHTML = `
         <div class="max-w-xs p-3 rounded-lg ${isMe ? 'bg-primary' : 'bg-surface'}">
-          <p>${m.text}</p>
+          <p>${m.content}</p>
           <p class="text-xs text-right opacity-70 mt-1">
-            ${new Date(m.createdAt).toLocaleTimeString()} 
-            ${isMe ? (m.status === 'seen' ? '✓✓' : '✓') : ''}
+            ${new Date(m.createdAt).toLocaleTimeString()} ${isMe ? (m.status === 'seen' ? '✓✓' : '✓') : ''}
           </p>
         </div>
       `;
@@ -284,21 +248,25 @@
     }
 
     /* ===================== SOCKET ===================== */
-    socket.on('userOnline', id => {
-      onlineUsers.add(id);
+    socket.on('presence:update', ({ userId, status }) => {
+      if (status === 'online') onlineUsers.add(userId); else onlineUsers.delete(userId);
       loadFriends();
     });
 
-    socket.on('userOffline', id => {
-      onlineUsers.delete(id);
-      loadFriends();
-    });
-
-    socket.on('receiveMessage', msg => {
-      if (currentFriend && msg.senderId === currentFriend.id) {
+    socket.on('message:receive', msg => {
+      if (currentFriend && msg.sender === currentFriend.id) {
         renderMessage(msg);
-        socket.emit('messageSeen', msg.id);
+        socket.emit('message:seen', { messageIds: [msg._id] });
       }
+    });
+
+    socket.on('message:seen:update', ({ messageId }) => {
+      const msgEls = messagesEl.querySelectorAll('div');
+      msgEls.forEach(el => {
+        if (el.dataset.id === messageId) {
+          el.querySelector('p:last-child').textContent += ' ✓✓';
+        }
+      });
     });
 
     /* ===================== LOGOUT ===================== */
@@ -311,6 +279,5 @@
     searchInput.addEventListener('input', e => loadFriends(e.target.value));
     loadCurrentUser();
   </script>
-
 </body>
 </html>

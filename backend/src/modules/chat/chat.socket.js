@@ -18,20 +18,17 @@ async function notifyFriendsStatus(userId, status, io) {
   user.friends.forEach(friendId => {
     const friendSocket = onlineUsers.get(friendId.toString());
     if (friendSocket) {
-      io.to(friendSocket).emit('presence:update', {
-        userId,
-        status
-      });
+      io.to(friendSocket).emit('presence:update', { userId, status });
     }
   });
 }
 
 export default function chatSocket(io) {
-  io.on('connection', (socket) => {
+  io.on('connection', socket => {
     console.log('🟢 Socket connected:', socket.id);
 
     /* ───────── USER ONLINE ───────── */
-    socket.on('user:online', async (userId) => {
+    socket.on('user:online', async userId => {
       socket.userId = userId;
       onlineUsers.set(userId.toString(), socket.id);
       socket.join(userId.toString());
@@ -42,26 +39,19 @@ export default function chatSocket(io) {
     /* ───────── USER OFFLINE ───────── */
     socket.on('disconnect', async () => {
       if (!socket.userId) return;
-
       onlineUsers.delete(socket.userId.toString());
       await notifyFriendsStatus(socket.userId, 'offline', io);
-
       console.log('🔴 Socket disconnected:', socket.id);
     });
 
     /* ───────── TYPING INDICATOR ───────── */
     socket.on('typing:start', ({ to }) => {
       const targetSocket = onlineUsers.get(to);
-      if (targetSocket) {
-        io.to(targetSocket).emit('typing:start', { from: socket.userId });
-      }
+      if (targetSocket) io.to(targetSocket).emit('typing:start', { from: socket.userId });
     });
-
     socket.on('typing:stop', ({ to }) => {
       const targetSocket = onlineUsers.get(to);
-      if (targetSocket) {
-        io.to(targetSocket).emit('typing:stop', { from: socket.userId });
-      }
+      if (targetSocket) io.to(targetSocket).emit('typing:stop', { from: socket.userId });
     });
 
     /* ───────── SEND MESSAGE ───────── */
@@ -78,16 +68,13 @@ export default function chatSocket(io) {
 
       const receiverSocket = onlineUsers.get(to);
 
-      // Delivered
       if (receiverSocket) {
         message.status = 'delivered';
         message.deliveredAt = new Date();
         await message.save();
-
         io.to(receiverSocket).emit('message:receive', message);
       }
 
-      // Echo back to sender
       socket.emit('message:sent', message);
     });
 
@@ -100,15 +87,12 @@ export default function chatSocket(io) {
         { status: 'seen', seenAt: new Date() }
       );
 
-      // Notify only sender of these messages
-      messageIds.forEach(async (id) => {
+      messageIds.forEach(async id => {
         const msg = await Message.findById(id);
         if (!msg) return;
 
         const senderSocket = onlineUsers.get(msg.sender.toString());
-        if (senderSocket) {
-          io.to(senderSocket).emit('message:seen:update', { messageId: id, seenBy: socket.userId });
-        }
+        if (senderSocket) io.to(senderSocket).emit('message:seen:update', { messageId: id, seenBy: socket.userId });
       });
     });
   });
