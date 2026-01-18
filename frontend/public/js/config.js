@@ -1,3 +1,3 @@
 window.CONFIG = {
-  API_BASE_URL: import.meta.env.A_BACKEND_URL
+  API_BASE_URL: "https://whisp-backend-jle2.onrender.com"
 };

@@ -34,7 +34,7 @@ window.onload = function() {
       console.log('Google ID token:', response.credential);
 
       // send to backend
-      const res = await fetch(`${API_BASE}/auth/google`, {
+      const res = await fetch(`https://whisp-backend-jle2.onrender.com/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential })
