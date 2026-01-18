@@ -1,5 +1,4 @@
 // js/auth/google.js
-const GOOGLE_CLIENT_ID = "754770143659-o1s7g437emffuo7goi7pime6chqf6cp5.apps.googleusercontent.com";
 
 window.onload = function() {
   const googleBtn = document.getElementById('googleBtn');
@@ -14,7 +13,7 @@ window.onload = function() {
 
   // Initialize Google OAuth
   google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: "754770143659-o1s7g437emffuo7goi7pime6chqf6cp5.apps.googleusercontent.com",
     callback: handleGoogleLogin
   });
 
