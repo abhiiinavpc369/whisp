@@ -1,4 +1,5 @@
 // js/auth/google.js
+const API_BASE = import.meta.env.A_BACKEND_URL;
 
 window.onload = function() {
   const googleBtn = document.getElementById('googleBtn');
@@ -32,7 +33,7 @@ window.onload = function() {
       console.log('Google ID token:', response.credential);
 
       // send to backend
-      const res = await fetch('http://localhost:4000/auth/google', {
+      const res = await fetch(`${API_BASE}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential })
