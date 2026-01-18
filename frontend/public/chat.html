@@ -199,7 +199,7 @@
 
     async function acceptFriend(id) {
       const token = window.getToken();
-      await fetch(`${API_BASE}/friends/accept/${id}`, {
+      await fetch(`https://whisp-backend-jle2.onrender.com/friends/accept/${id}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -209,7 +209,7 @@
 
     async function rejectFriend(id) {
       const token = window.getToken();
-      await fetch(`${API_BASE}/friends/reject/${id}`, {
+      await fetch(`https://whisp-backend-jle2.onrender.com/friends/reject/${id}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
